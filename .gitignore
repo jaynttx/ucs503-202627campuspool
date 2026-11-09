@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+*.pem
+code/backend/.env
+code/backend/uploads/*
+!code/backend/uploads/.gitkeep
