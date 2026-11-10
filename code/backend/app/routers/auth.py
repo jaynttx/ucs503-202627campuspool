@@ -14,7 +14,6 @@ from ..deps import COOKIE, as_utc, end_session, get_current_user, start_session
 from ..chatfiles import purge_chat_files
 from ..mailer import MailError, deliver_otp
 from ..models import OtpCode, Payment, Ride, User, UserSession
-from ..ratelimit import client_ip, enforce
 from ..security import codes_match, hash_code, hash_token, is_allowed_email, new_otp, normalize_email
 from ..views import me_view
 
@@ -46,7 +45,6 @@ def _expected_delivery() -> str:
 
 @router.post("/request-otp")
 def request_otp(body: RequestOtpIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    enforce(f"otp-ip:{client_ip(request)}", 10, 3600, "Too many code requests from this network. Try again later.")
     email = normalize_email(body.email)
     if not is_allowed_email(email):
         raise HTTPException(400, f"Use your @{settings.allowed_email_domain} email address (no + aliases).")
@@ -94,7 +92,6 @@ def request_otp(body: RequestOtpIn, request: Request, db: Session = Depends(get_
 
 @router.post("/verify-otp")
 def verify_otp(body: VerifyOtpIn, request: Request, response: Response, db: Session = Depends(get_db)) -> dict:
-    enforce(f"verify-ip:{client_ip(request)}", 30, 3600, "Too many attempts from this network. Try again later.")
     email = normalize_email(body.email)
     now = datetime.now(timezone.utc)
     row = db.scalar(
